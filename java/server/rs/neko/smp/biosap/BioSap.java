@@ -6,8 +6,6 @@ package rs.neko.smp.biosap;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
-import java.util.UUID;
-
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
@@ -19,6 +17,7 @@ public class BioSap implements DedicatedServerModInitializer {
   @Override
   public void onInitializeServer() {
     LOGGER.info("Initializing NSMP BioSap");
+    BioSapConfig.getConfig();
     CommandRegistrationCallback.EVENT.register((d, r, e) -> {
       d.register(literal("nsmp-biosap").then(literal("reload").requires(s -> s.hasPermissionLevel(2)).executes(ctx -> {
         BioSapConfig.loadData();
