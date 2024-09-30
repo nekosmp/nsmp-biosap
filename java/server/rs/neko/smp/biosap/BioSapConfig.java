@@ -19,9 +19,9 @@ import net.fabricmc.loader.api.FabricLoader;
 public class BioSapConfig {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-  private static Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, Identifier>>> data = null;
+  private static Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, String>>> data = null;
 
-  public static Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, Identifier>>> getConfig() {
+  public static Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, String>>> getConfig() {
     if (data == null) {
       loadData();
       saveData();
@@ -35,11 +35,11 @@ public class BioSapConfig {
     String json = "{}";
     try {
       json = Files.readString(PATH);
-      data = JsonHelper.deserialize(GSON, json, new TypeToken<Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, Identifier>>>>() {
+      data = JsonHelper.deserialize(GSON, json, new TypeToken<Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, String>>>>() {
       });
     } catch (Exception ex) {
       BioSap.LOGGER.warn("Failed to load json from {}: {}", PATH, ex);
-      data = new Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, Identifier>>>();
+      data = new Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, String>>>();
     }
   }
 
@@ -51,11 +51,11 @@ public class BioSapConfig {
     }
   }
 
-  public static Identifier getFeature(Identifier biome, Identifier sapling, String type) {
-    Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, Identifier>> local_saplings = getConfig().get(biome);
+  public static String getFeature(Identifier biome, Identifier sapling, String type) {
+    Object2ObjectOpenHashMap<Identifier, Object2ObjectOpenHashMap<String, String>> local_saplings = getConfig().get(biome);
     if (local_saplings == null)
       return null;
-    Object2ObjectOpenHashMap<String, Identifier> sapling_types = local_saplings.get(sapling);
+    Object2ObjectOpenHashMap<String, String> sapling_types = local_saplings.get(sapling);
     if (sapling_types == null)
       return null;
     return sapling_types.get(type);

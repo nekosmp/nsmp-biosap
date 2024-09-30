@@ -77,10 +77,10 @@ public abstract class MixinSaplingGenerator {
 
   private static boolean place(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, String type) {
     Identifier biome = w.getBiome(p).getKey().get().getValue();
-    Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), type);
+    String feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), type);
     if (feature_id == null)
       return false;
-    ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
+    ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(Identifier.tryParse(feature_id));
     if (feature == null) {
       BioSap.LOGGER.warn("Failed to find feature '{}'", feature_id);
       return false;
