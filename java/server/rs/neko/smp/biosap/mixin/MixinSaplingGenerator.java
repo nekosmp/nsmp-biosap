@@ -35,17 +35,17 @@ public abstract class MixinSaplingGenerator {
       CallbackInfoReturnable<Boolean> c) {
     System.out.println("SaplingGenerator called");
 
-    if (checkAndPlace(w, g, p, s, r, 2, "3x3")) {
+    if (checkAndPlace(w, g, p, s, r, 2)) {
       BioSap.LOGGER.info("Placed a 3x3 tree");
       c.setReturnValue(true);
       return;
     }
-    if (checkAndPlace(w, g, p, s, r, 1, "2x2")) {
+    if (checkAndPlace(w, g, p, s, r, 1)) {
       BioSap.LOGGER.info("Placed a 2x2 tree");
       c.setReturnValue(true);
       return;
     }
-    if (place(w, g, p, s, r, "single")) {
+    if (place(w, g, p, s, r, 0)) {
       BioSap.LOGGER.info("Placed a single tree");
       c.setReturnValue(true);
       return;
@@ -58,7 +58,7 @@ public abstract class MixinSaplingGenerator {
     c.setReturnValue(false);
   }
 
-  private static boolean checkAndPlace(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad, String type) {
+  private static boolean checkAndPlace(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
     Block b = s.getBlock();
     for (int ox = 0; ox >= -rad; --ox) {
       for (int oy = 0; oy >= -rad; --oy) {
@@ -69,18 +69,18 @@ public abstract class MixinSaplingGenerator {
           }
         }
         if (check)
-          return place(w, g, p.add(ox, 0, oy), s, r, type);
+          return place(w, g, p.add(ox, 0, oy), s, r, rad);
       }
     }
     return false;
   }
 
-  private static boolean place(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, String type) {
+  private static boolean place(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
     Identifier biome = w.getBiome(p).getKey().get().getValue();
-    String feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), type);
+    Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), rad);
     if (feature_id == null)
       return false;
-    ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(Identifier.tryParse(feature_id));
+    ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
     if (feature == null) {
       BioSap.LOGGER.warn("Failed to find feature '{}'", feature_id);
       return false;
