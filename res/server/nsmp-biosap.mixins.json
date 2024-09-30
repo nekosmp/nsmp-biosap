@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "rs.neko.smp.biosap.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [],
+  "mixins": [
+    "MixinLargeTreeSaplingGenerator",
+    "MixinSaplingGenerator"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
