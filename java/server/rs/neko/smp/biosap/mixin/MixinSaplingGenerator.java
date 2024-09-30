@@ -34,8 +34,6 @@ public abstract class MixinSaplingGenerator {
   @Inject(at = @At(value = "HEAD"), method = "generate(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/gen/chunk/ChunkGenerator;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/random/Random;)Z", cancellable = true)
   public void generate(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r,
       CallbackInfoReturnable<Boolean> c) {
-    System.out.println("SaplingGenerator called");
-
     if (checkAndPlace(w, g, p, s, r, 2)) {
       BioSap.LOGGER.info("Placed a 3x3 tree");
       c.setReturnValue(true);
