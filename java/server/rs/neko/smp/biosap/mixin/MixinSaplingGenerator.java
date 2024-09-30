@@ -6,6 +6,7 @@ package rs.neko.smp.biosap.mixin;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.sapling.SaplingGenerator;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
@@ -45,7 +46,7 @@ public abstract class MixinSaplingGenerator {
       c.setReturnValue(true);
       return;
     }
-    if (place(w, g, p, s, r, 0)) {
+    if (checkAndPlace(w, g, p, s, r, 0)) {
       BioSap.LOGGER.info("Placed a single tree");
       c.setReturnValue(true);
       return;
@@ -59,17 +60,39 @@ public abstract class MixinSaplingGenerator {
   }
 
   private static boolean checkAndPlace(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
+    if (rad <= 0)
+      return tryPlace(w, g, p, s, r, rad);
     Block b = s.getBlock();
     for (int ox = 0; ox >= -rad; --ox) {
       for (int oy = 0; oy >= -rad; --oy) {
+        BlockPos op = p.add(ox, 0, oy);
         boolean check = true;
         for (int cx = 0; cx <= rad; cx++) {
           for (int cy = 0; cy <= rad; cy++) {
-            check &= w.getBlockState(p.add(ox + cx, 0, oy + cy)).isOf(b);
+            check &= w.getBlockState(op.add(cx, 0, cy)).isOf(b);
           }
         }
-        if (check)
-          return place(w, g, p.add(ox, 0, oy), s, r, rad);
+        if (check && tryPlace(w, g, op, s, r, rad))
+          return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean tryPlace(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
+    // Remove all saplings
+    for (int x = 0; x <= rad; x++) {
+      for (int y = 0; y <= rad; y++) {
+        w.setBlockState(p.add(x, 0, y), Blocks.AIR.getDefaultState());
+      }
+    }
+    // Try to place the feature
+    if (place(w, g, p, s, r, rad))
+      return true;
+    // Undo sapling removal
+    for (int x = 0; x <= rad; x++) {
+      for (int y = 0; y <= rad; y++) {
+        w.setBlockState(p.add(x, 0, y), s);
       }
     }
     return false;
@@ -77,9 +100,12 @@ public abstract class MixinSaplingGenerator {
 
   private static boolean place(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
     Identifier biome = w.getBiome(p).getKey().get().getValue();
+    System.out.println("gwagwa " + biome + " " + Registries.BLOCK.getId(s.getBlock()));
     Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), rad);
-    if (feature_id == null)
+    if (feature_id == null) {
+      BioSap.LOGGER.warn("No sdasd '{}'", feature_id);
       return false;
+    }
     ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
     if (feature == null) {
       BioSap.LOGGER.warn("Failed to find feature '{}'", feature_id);
@@ -89,4 +115,3 @@ public abstract class MixinSaplingGenerator {
   }
 
 }
-
