@@ -4,19 +4,30 @@
 
 package rs.neko.smp.biosap.mixin;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.sapling.SaplingGenerator;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.random.Random;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
 
+import org.apache.logging.log4j.core.jmx.Server;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import rs.neko.smp.biosap.BioSap;
+import rs.neko.smp.biosap.BioSapConfig;
 
 @Mixin(SaplingGenerator.class)
 public abstract class MixinSaplingGenerator {
@@ -27,9 +38,55 @@ public abstract class MixinSaplingGenerator {
   public void generate(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r,
       CallbackInfoReturnable<Boolean> c) {
     System.out.println("SaplingGenerator called");
-    if (isNearFlowers(w, p)) {
-      
+
+    if (checkAndPlace(w, g, p, s, r, 2)) {
+      BioSap.LOGGER.info("Placed a 3x3 tree");
+      c.setReturnValue(true);
+      return;
     }
+    if (checkAndPlace(w, g, p, s, r, 1)) {
+      BioSap.LOGGER.info("Placed a 2x2 tree");
+      c.setReturnValue(true);
+      return;
+    }
+    if (checkAndPlace(w, g, p, s, r, 0)) {
+      BioSap.LOGGER.info("Placed a 1x1 tree");
+      c.setReturnValue(true);
+      return;
+    }
+
+    if (isNearFlowers(w, p)) {
+
+    }
+    BioSap.LOGGER.warn("Didn't place any tree");
     c.setReturnValue(false);
+  }
+
+  private static boolean checkAndPlace(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
+    Block b = s.getBlock();
+    for (int ox = 0; ox >= -rad; --ox) {
+      for (int oy = 0; oy >= -rad; --oy) {
+        boolean check = true;
+        for (int cx = 0; cx <= rad; cx++) {
+          for (int cy = 0; cy <= rad; cy++) {
+            check &= w.getBlockState(p.add(ox + cx, 0, oy + cy)).isOf(b);
+          }
+        }
+        if (check) {
+          BlockPos pos = p.add(ox, 0, oy);
+          Identifier biome = w.getBiome(pos).getKey().get().getValue();
+          Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), rad);
+          if (feature_id == null)
+            return false;
+          ConfiguredFeature feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
+          if (feature == null) {
+            BioSap.LOGGER.warn("Failed to get feature {}", feature_id);
+            return false;
+          }
+          return feature.generate(w, g, r, pos);
+        }
+      }
+    }
+    return false;
   }
 }
