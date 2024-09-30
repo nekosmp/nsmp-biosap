@@ -49,7 +49,7 @@ public abstract class MixinSaplingGenerator {
       c.setReturnValue(true);
       return;
     }
-    if (checkAndPlace(w, g, p, s, r, 0)) {
+    if (place(w, g, p, s, r, 0)) {
       BioSap.LOGGER.info("Placed a 1x1 tree");
       c.setReturnValue(true);
       return;
@@ -72,21 +72,25 @@ public abstract class MixinSaplingGenerator {
             check &= w.getBlockState(p.add(ox + cx, 0, oy + cy)).isOf(b);
           }
         }
-        if (check) {
-          BlockPos pos = p.add(ox, 0, oy);
-          Identifier biome = w.getBiome(pos).getKey().get().getValue();
-          Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), rad);
-          if (feature_id == null)
-            return false;
-          ConfiguredFeature feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
-          if (feature == null) {
-            BioSap.LOGGER.warn("Failed to get feature {}", feature_id);
-            return false;
-          }
-          return feature.generate(w, g, r, pos);
-        }
+        if (check)
+          return place(w, g, p.add(ox, 0, oy), s, r, rad);
       }
     }
     return false;
   }
+
+  private static boolean place(ServerWorld w, ChunkGenerator g, BlockPos p, BlockState s, Random r, int rad) {
+    Identifier biome = w.getBiome(p).getKey().get().getValue();
+    Identifier feature_id = BioSapConfig.getFeature(biome, Registries.BLOCK.getId(s.getBlock()), rad);
+    if (feature_id == null)
+      return false;
+    ConfiguredFeature<?, ?> feature = w.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(feature_id);
+    if (feature == null) {
+      BioSap.LOGGER.warn("Failed to find feature '{}'", feature_id);
+      return false;
+    }
+    return feature.generate(w, g, r, p);
+  }
+
 }
+
